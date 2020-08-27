@@ -32,9 +32,8 @@ class _NewsState extends State<News> {
           body: TabBarView(
             children: choices.map((Choice choice) {
               return Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.only(top: 18),
                 child: Container(
-                  padding: EdgeInsets.only(top: 18),
                   child: FutureBuilder(
                     future: NewsData().getNews(1, choice.title.toLowerCase()),
                     builder: (BuildContext context, AsyncSnapshot s) {
