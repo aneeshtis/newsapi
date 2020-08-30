@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:newsapi/data/newsapi.dart';
 import 'package:newsapi/model/news_headlines.dart';
 import 'package:newsapi/view/news_details.dart';
+import 'package:newsapi/widget/no_internet.dart';
 
 class News extends StatefulWidget {
   @override
@@ -9,6 +12,34 @@ class News extends StatefulWidget {
 }
 
 class _NewsState extends State<News> {
+  bool _showNoInternet = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  void _loadData() async {
+    _checkInternet();
+  }
+
+  _checkInternet() async {
+    try {
+      final result = await InternetAddress.lookup('google.com');
+      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+        setState(() {
+          _showNoInternet = false;
+        });
+      }
+    } on SocketException catch (_) {
+      print(_);
+      setState(() {
+        _showNoInternet = true;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -33,21 +64,32 @@ class _NewsState extends State<News> {
             children: choices.map((Choice choice) {
               return Padding(
                 padding: const EdgeInsets.only(top: 18),
-                child: Container(
-                  child: FutureBuilder(
-                    future: NewsData().getNews(1, choice.title.toLowerCase()),
-                    builder: (BuildContext context, AsyncSnapshot s) {
-                      if (s.data == null) {
-                        return Center(
-                          child: CircularProgressIndicator(),
-                        );
-                      } else
-                        return new NewsList(
-                          headlines: s.data,
-                        );
-                    },
-                  ),
-                ),
+                child: _showNoInternet == false
+                    ? Container(
+                        child: FutureBuilder(
+                          future:
+                              NewsData().getNews(1, choice.title.toLowerCase()),
+                          builder: (BuildContext context, AsyncSnapshot s) {
+                            if (s.data == null) {
+                              return Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            } else
+                              return new NewsList(
+                                headlines: s.data,
+                              );
+                          },
+                        ),
+                      )
+                    : Container(
+                        child: GestureDetector(
+                            behavior: HitTestBehavior.translucent,
+                            onTap: () {
+                              _checkInternet();
+                            },
+                            child: NoInternet(
+                                MediaQuery.of(context).size.height - 200)),
+                      ),
               );
             }).toList(),
           ),
